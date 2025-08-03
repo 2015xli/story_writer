@@ -6,7 +6,7 @@ An AI-powered agent for generating and refining short stories through an interac
 
 The Story Writing Agent is built using the Google ADK (Agent Development Kit) framework and implements a multi-agent architecture where different AI agents handle specific aspects of the story creation process. The system guides users through topic collection, initial story generation, and iterative refinement based on AI critique. 
 
-It is based on Google ADK example code, but with enhancements to make it more user-friendly and interactive. What it really experiments with is how to interact with the user in a single root agent design that can run with adk run without writing your own runner and session management code.
+It is based on Google ADK example code, but with enhancements to make it more user-friendly and interactive. What it really experiments with is how to interact with the user in a single root agent design that can run with "adk run" without writing your own runner and session management code.
 
 ## Features
 
@@ -28,6 +28,7 @@ VibeWritingAgent (custom agent) is the root agent that orchestrates the entire s
 
 The hierarchy of the agents is as follows:
 
+```
 root_agent (VibeWritingAgent) 
   └-subagents
         └- topic_collector_agent (LlmAgent)
@@ -36,7 +37,7 @@ root_agent (VibeWritingAgent)
                 └- story_refinement_loop (LoopAgent)
                         └- critic_agent_in_loop (LlmAgent)
                         └- refiner_agent_in_loop (LlmAgent)
-
+```
 
 ## Requirements
 
