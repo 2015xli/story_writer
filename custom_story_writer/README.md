@@ -41,7 +41,7 @@ root_agent (VibeWritingAgent)
 
 ## Requirements
 
-- Python 3.13
+- Python 3.13+
 - Google ADK (Agent Development Kit)
 - LLM API access with LiteLLM (e.g. OpenAI, Anthropic, DeepSeek, etc. The code use DeepSeek by default. API key is required.)
 
