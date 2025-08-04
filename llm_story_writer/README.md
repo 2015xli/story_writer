@@ -75,7 +75,7 @@ The agent will interact to get both the topic and theme are confirmed. Then it w
 
 The agent is pre-configured to use the `deepseek/deepseek-chat` model, but this can be modified in the `agent.py` file by changing the `LLM_MODEL` constant.
 
-## Design idea (or trick)
+## Design Notes
 
 In order to make the agent run with "adk run" and "adk web" without writing your own runner and session management code, we use a root agent design that calls the story writing pipeline as a sub-agent.
 

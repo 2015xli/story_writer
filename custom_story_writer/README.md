@@ -62,7 +62,7 @@ Key configuration options in `agent.py`:
 2. Follow the interactive prompts to provide a story topic and theme
 3. The system will generate a story based on the topic and theme
 
-## Design idea (or trick)
+## Design Notes
 
 The whole coordination logic is implemented in the _run_async_impl method of VibeWritingAgent. It basically just calls the async event for loop of subagent.run_async() for each subagent in the sub_agents list. The key part is, in order to interact with the user, the first event for loop of topic_collector_agent is not just to yield event, but also to collect user input and update the session state that can be used by the topic_collector_agent itself. In order to update the session state for it to be used in the next event generation, a session state "init_topic" is used to record the user's input. The state variable {{init_topic}} is used in the topic_collector_agent's instruction.
 
