@@ -2,6 +2,7 @@ from google.adk.agents import LoopAgent, LlmAgent, SequentialAgent
 from google.adk.tools.tool_context import ToolContext
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.models.llm_response import LlmResponse
+from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 import logging, copy
 from google.adk.agents.callback_context import CallbackContext
@@ -50,6 +51,30 @@ def exit_sequence(requirement: str, tool_context: ToolContext):
   # Return empty dict as tools should typically return JSON-serializable output
   return f"You have provided information for topic AND theme."
 
+def topic_collection(
+    callback_context: CallbackContext, llm_request: LlmRequest
+) -> Optional[LlmRequest]:
+
+    """Inspects/modifies the LLM request or skips the call."""
+    agent_name = callback_context.agent_name
+    print(f"[Callback] Before model call for agent: {agent_name}")
+
+    # Inspect the last user message in the request contents
+    last_user_message = ""
+    if llm_request.contents and llm_request.contents[-1].role == 'user':
+         if llm_request.contents[-1].parts:
+            last_user_message = llm_request.contents[-1].parts[0].text
+            print(f"[Callback] Inspecting last user message: '{last_user_message}'")
+            topic = callback_context.state.get(STATE_CURRENT_TOPIC, "")
+
+            if last_user_message and "EXIT" not in last_user_message.upper() and topic != "":
+                print(f"[Callback] Changing last user message: '{topic}'")
+                llm_request.contents[-1].parts[0].text = topic
+                # should not return llm_request here, because ADK thinks it's llm_response.
+
+    # Return None to allow the (modified) request to go to the LLM
+    return None
+
 def topic_clarification(
     callback_context: CallbackContext, llm_response: LlmResponse
 ) -> Optional[LlmResponse]:
@@ -85,11 +110,17 @@ def topic_clarification(
         print(f"Your originial info is incomplete. {topic}")
         print(f"Please provide the missing part.")
         print("[user]:", end="")
-        new_topic = input()
+        new_topic = input().strip()
 
         # Create a NEW LlmResponse with the modified content
         # Deep copy parts to avoid modifying original if other callbacks exist
-        modified_text = "Original topic: " + topic + "\nadditional information: " + new_topic
+        if 'exit' == new_topic:
+            modified_text = new_topic
+        else:
+            modified_text = topic + ". With additional information: " + new_topic
+
+        callback_context.state[STATE_CURRENT_TOPIC] = modified_text
+
         modified_parts = [copy.deepcopy(part) for part in llm_response.content.parts]
         modified_parts[0].text = modified_text # Update the text in the copied part
 
@@ -112,7 +143,7 @@ topic_collector_agent = LlmAgent(
     model=LLM_MODEL,
     include_contents='default',
     instruction=f"""You are collecting topic and theme for a flash story.
-                Look at the conversation history to extract topic and theme from the user input.
+                Look at the full conversation history and the following requirements to extract topic and theme from the user input.
                 Example topics: a person who wants to save the city with his friends, a programmer was rejected by his girlfriend.
                 Example themes: fantasy, science fiction, horror, romance, comedy, drama, thriller, mystery, young adult, middle grade.
 
@@ -127,6 +158,7 @@ topic_collector_agent = LlmAgent(
                 - Don't output any other text.
                 """,
     output_key=STATE_CURRENT_TOPIC,
+    before_model_callback=topic_collection
 )
 
 # STEP 0b: Topic Confirmation Agent
